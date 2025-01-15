@@ -40,7 +40,7 @@ function downloadFile(item) {
         chrome.downloads.download({
             url: item.url,
             filename: item.filename,
-            saveAs: true  // This will prompt for download location
+            saveAs: false  // This will prompt for download location
         }, (downloadId) => {
             if (chrome.runtime.lastError) {
                 console.error('Download failed:', chrome.runtime.lastError);
