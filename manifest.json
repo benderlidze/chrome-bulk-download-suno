@@ -3,8 +3,8 @@
   "name": "Bulk Media Downloader",
   "version": "1.0",
   "description": "Downloads media files from the page",
-  "permissions": ["downloads", "activeTab", "scripting"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": ["downloads", "activeTab", "scripting", "webRequest"],
+  "host_permissions": ["https://studio-api.prod.suno.com/*"],
   "action": {
     "default_icon": "icon.png"
   },
