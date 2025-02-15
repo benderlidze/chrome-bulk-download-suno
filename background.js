@@ -77,7 +77,7 @@ async function fetchFeedPage(page) {
     return response.json();
 }
 
-// Updated function: Function to fetch all pages and collect audio URLs from clips array
+// New code: Function to fetch all pages and collect audio URLs from clips array
 async function fetchAllFeeds() {
     try {
         // Get first page to determine total pages
@@ -96,30 +96,19 @@ async function fetchAllFeeds() {
             }
         }
         console.log("Collected audio URLs:", audioUrls);
-        // New: Download all MP3 files using audio URLs
-        downloadMP3s(audioUrls);
+        // Process the collected audio URLs for download
+
+        for (const url of audioUrls) {
+            downloadFile({
+                url: url,
+                filename: url.split('/').pop()
+            });
+        }
+
+
     } catch (error) {
         console.error("Error in fetchAllFeeds:", error);
     }
-}
-
-// New function: Download all MP3 files from the given audio URLs
-function downloadMP3s(urls) {
-    urls.forEach((url, index) => {
-        const filename = `audio_${index + 1}.mp3`;
-        console.log(`Starting download: ${filename} from ${url}`);
-        chrome.downloads.download({
-            url: url,
-            filename: filename,
-            saveAs: false
-        }, (downloadId) => {
-            if (chrome.runtime.lastError) {
-                console.error('Download failed:', chrome.runtime.lastError);
-            } else {
-                console.log(`Download started with ID: ${downloadId}`);
-            }
-        });
-    });
 }
 
 async function processDownloads(items) {
