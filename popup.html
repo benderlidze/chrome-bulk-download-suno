@@ -23,14 +23,26 @@
             font-family: monospace;
             font-size: 12px;
         }
+
+        #apiResponse {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
     <div id="dropdownDiv">
         <h1>Header Values</h1>
         <button id="refreshBtn">Refresh Headers</button>
+        <button id="testApiBtn">Test API</button>
         <div id="headerValues">
             <!-- Header values will be displayed here -->
+        </div>
+        <div id="apiResponse">
+            <!-- API response will be shown here -->
         </div>
         <div id="debugInfo">
             <!-- Debug info will be shown here -->
