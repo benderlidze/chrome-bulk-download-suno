@@ -3,7 +3,11 @@
   "name": "Dropdown Extension",
   "version": "1.0",
   "description": "Displays a dropdown div with authorization and browser-token headers.",
-  "permissions": ["webRequest", "storage", "activeTab"],
+  "permissions": [
+    "webRequest",
+    "storage",
+    "activeTab"
+  ],
   "host_permissions": [
     "*://*.suno.com/*",
     "*://*.prod.suno.com/*",
