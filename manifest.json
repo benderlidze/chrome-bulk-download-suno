@@ -1,20 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "Bulk Media Downloader",
+  "name": "Dropdown Extension",
   "version": "1.0",
-  "description": "Downloads media files from the page",
-  "permissions": ["downloads", "activeTab", "scripting", "webRequest"],
-  "host_permissions": ["https://studio-api.prod.suno.com/*"],
-  "action": {
-    "default_icon": "icon.png"
-  },
+  "description": "Displays a dropdown div with authorization and browser-token headers.",
+  "permissions": ["webRequest", "storage", "activeTab"],
+  "host_permissions": [
+    "*://*.suno.com/*",
+    "*://*.prod.suno.com/*",
+    "https://studio-api.prod.suno.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
-  "web_accessible_resources": [
-    {
-      "resources": ["inject.js"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Open Dropdown"
+  }
 }

@@ -1,150 +1,53 @@
-let capturedBearerToken = null;
+let headerData = { authorization: null, browserToken: null };
+let debugLog = [];
 
-chrome.action.onClicked.addListener(async (tab) => {
-    // Inject the content script
-    await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['content.js']
-    });
-});
+function addDebugLog(message) {
+    console.log(message);
+    debugLog.unshift({ timestamp: new Date().toISOString(), message });
+    if (debugLog.length > 50) debugLog.pop();
+}
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "URL_LIST") {
-        //processDownloads(message.data);
-        fetchAllFeeds();
-    }
-    // Optionally, trigger the fetchFeed function via message
-    if (message.type === "FETCH_FEED") {
-        fetchAllFeeds();
-    }
-});
+addDebugLog('Background script loaded');
 
-// New code: Listen for requests matching the API endpoint to capture the bearer token
-if (chrome.webRequest && chrome.webRequest.onBeforeSendHeaders) {
-    chrome.webRequest.onBeforeSendHeaders.addListener(
-        (details) => {
-            if (details.requestHeaders) {
-                for (const header of details.requestHeaders) {
-                    if (header.name.toLowerCase() === "authorization") {
-                        capturedBearerToken = header.value;
-                        console.log("Captured bearer token:", capturedBearerToken);
-                        break;
-                    }
+chrome.webRequest.onBeforeSendHeaders.addListener(
+    function (details) {
+        addDebugLog(`Request intercepted: ${details.url}`);
+
+        if (details.requestHeaders) {
+            details.requestHeaders.forEach(header => {
+                addDebugLog(`Header found: ${header.name}`);
+                const name = header.name.toLowerCase();
+                if (name === 'authorization') {
+                    headerData.authorization = header.value;
+                    addDebugLog('Authorization header captured');
                 }
-            } else {
-                console.error("No requestHeaders found in details");
-            }
-        },
-        { urls: ["https://studio-api.prod.suno.com/api/feed/v2*"] },
-        ["requestHeaders", "extraHeaders"]  // updated listener options
-    );
-} else {
-    console.error("chrome.webRequest.onBeforeSendHeaders is not available.");
-}
-
-// New code: Function to perform the fetch call for a given page using the captured token
-async function fetchFeedPage(page) {
-    // Ensure token is ready
-    if (!capturedBearerToken) {
-        console.error("Captured bearer token not available. Retrying fetchFeedPage in 2 seconds...");
-    }
-
-    const response = await fetch(`https://studio-api.prod.suno.com/api/feed/v2?page=${page}`, {
-        method: "GET",
-        mode: "cors",
-        credentials: "include",
-        headers: {
-            "accept": "*/*",
-            "accept-language": "en,ru;q=0.9,uk;q=0.8",
-            "affiliate-id": "undefined",
-            "authorization": capturedBearerToken,
-            "browser-token": "{\"token\":\"...\"}", // existing browser-token value
-            "cache-control": "no-cache",
-            "device-id": "16db85b1-5b89-4610-9e57-2d4e5ba55798",
-            "pragma": "no-cache",
-            "priority": "u=1, i",
-            "sec-ch-ua": "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\", \"Google Chrome\";v=\"132\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site"
-        },
-        referrer: "https://suno.com/",
-        referrerPolicy: "strict-origin-when-cross-origin",
-        body: null
-    });
-    return response.json();
-}
-
-// New code: Function to fetch all pages and collect audio URLs from clips array
-async function fetchAllFeeds() {
-    try {
-        // Get first page to determine total pages
-        const firstData = await fetchFeedPage(0);
-        const totalResults = firstData.num_total_results || 0;
-        const clips = firstData.clips || [];
-        // Assuming 20 items per page
-        const totalPages = Math.ceil(totalResults / 20);
-        let audioUrls = clips.map(item => item.audio_url).filter(url => url);
-
-        // Iterate remaining pages (if any)
-        for (let page = 1; page < totalPages; page++) {
-            const data = await fetchFeedPage(page);
-            if (data && data.clips) {
-                audioUrls = audioUrls.concat(data.clips.map(item => item.audio_url).filter(url => url));
-            }
-        }
-        console.log("Collected audio URLs:", audioUrls);
-        // Process the collected audio URLs for download
-
-        for (const url of audioUrls) {
-            downloadFile({
-                url: url,
-                filename: url.split('/').pop()
+                if (name === 'browser-token') {
+                    headerData.browserToken = header.value;
+                    addDebugLog('Browser-token header captured');
+                }
             });
         }
+    },
+    {
+        urls: [
+            "*://*.suno.com/*",
+            "*://*.prod.suno.com/*",
+            "https://studio-api.prod.suno.com/*"
+        ]
+    },
+    ["requestHeaders"]
+);
 
-
-    } catch (error) {
-        console.error("Error in fetchAllFeeds:", error);
-    }
-}
-
-async function processDownloads(items) {
-    console.log(`Processing downloads:`, items);
-
-    for (const item of items) {
-        if (!item.link || !item.name) {
-            console.log(`Skipping invalid item:`, item);
-            continue;
-        }
-
-        const filename = `${item.name}.mp3`; // Assuming these are audio files
-        console.log(`Starting download: ${filename}`);
-
-        await downloadFile({
-            url: item.link,
-            filename: filename
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === "getHeaders") {
+        addDebugLog('Sending headers to popup');
+        addDebugLog(`Current headers: ${JSON.stringify(headerData)}`);
+        sendResponse({
+            data: headerData,
+            debug: debugLog
         });
-
-        // Add a small delay between downloads
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        return true;
     }
-}
+});
 
 
-function downloadFile(item) {
-    return new Promise((resolve) => {
-        chrome.downloads.download({
-            url: item.url,
-            filename: item.filename,
-            saveAs: false  // This will prompt for download location
-        }, (downloadId) => {
-            if (chrome.runtime.lastError) {
-                console.error('Download failed:', chrome.runtime.lastError);
-            }
-            resolve(downloadId);
-        });
-    });
-}

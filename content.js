@@ -1,29 +1,32 @@
-(function() {
-    // Check if the script has already been injected
-    let injectedScript = document.querySelector('script[data-injected="true"]');
-    
-    if (!injectedScript) {
-        // Create and inject the script if not already injected
-        injectedScript = document.createElement('script');
-        injectedScript.src = chrome.runtime.getURL('inject.js');
-        injectedScript.setAttribute('data-injected', 'true');
-        document.body.appendChild(injectedScript);
+console.log("Content script loaded");
+
+chrome.webRequest.onBeforeSendHeaders.addListener(
+  function (details) {
+    let authorizationHeader = null;
+    let browserTokenHeader = null;
+
+    for (const header of details.requestHeaders) {
+      console.log('heasder', header);
+      if (header.name === 'authorization') {
+        authorizationHeader = header.value;
+      }
+      if (header.name === 'browser-token') {
+        browserTokenHeader = header.value;
+      }
     }
 
-    // Define the event listener function
-    const handleMessage = (event) => {
-        if (event.data.type === "FROM_PAGE") {
-            chrome.runtime.sendMessage({
-                type: "URL_LIST",
-                data: event.data.data
-            });
-
-            // Cleanup: Remove injected script and event listener
-            injectedScript.remove();
-            window.removeEventListener('message', handleMessage);
+    if (authorizationHeader && browserTokenHeader) {
+      chrome.runtime.sendMessage({
+        type: "storeHeader",
+        data: {
+          authorization: authorizationHeader,
+          browserToken: browserTokenHeader
         }
-    };
+      });
+    }
 
-    // Listen for the data from the injected script
-    window.addEventListener('message', handleMessage);
-})();
+    return { requestHeaders: details.requestHeaders };
+  },
+  { urls: ["https://studio-api.prod.suno.com/api/feed/v2?page*"] },
+  ["requestHeaders", "extraHeaders"]
+);
