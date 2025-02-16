@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const response = await chrome.runtime.sendMessage({ type: "getHeaders" });
             const data = response?.data || {};
-            
+
             console.log('Using headers:', data); // Debug log
 
             const apiResponse = await fetch("https://studio-api.prod.suno.com/api/feed/v2?page=0", {
@@ -59,12 +59,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             console.log('API Response status:', apiResponse.status); // Debug log
             const responseData = await apiResponse.json(); // Changed from response to apiResponse
-            
-            document.getElementById("apiResponse").innerHTML = 
+
+            document.getElementById("apiResponse").innerHTML =
                 `<strong>API Response:</strong><br>${JSON.stringify(responseData, null, 2)}`;
         } catch (error) {
             console.error('API Error:', error); // Debug log
-            document.getElementById("apiResponse").innerHTML = 
+            document.getElementById("apiResponse").innerHTML =
                 `<strong>Error:</strong><br>${error.message}`;
         }
     }
