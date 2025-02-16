@@ -131,10 +131,48 @@ document.addEventListener('DOMContentLoaded', function () {
                 <hr>
                 Results Summary:
                 <p>Total URLs found: ${audioUrls.length}</p>
+                <button class="download-btn" id="downloadAllBtn">Download All Files</button>
                 <ul style="list-style-type: decimal;">
                     ${urlList}
                 </ul>
             `;
+
+            // Add click handler for download button
+            document.getElementById('downloadAllBtn').addEventListener('click', async () => {
+                const totalFiles = audioUrls.length;
+                
+                function downloadFile(item) {
+                    return new Promise((resolve) => {
+                        chrome.downloads.download({
+                            url: item.url,
+                            filename: item.filename,
+                            saveAs: false
+                        }, (downloadId) => {
+                            if (chrome.runtime.lastError) {
+                                console.error('Download failed:', chrome.runtime.lastError);
+                            }
+                            resolve(downloadId);
+                        });
+                    });
+                }
+
+                for (let i = 0; i < totalFiles; i++) {
+                    const url = audioUrls[i];
+                    const filename = url.split('/').pop();
+                    
+                    try {
+                        await downloadFile({
+                            url: url,
+                            filename: filename
+                        });
+                        
+                        // Add a small delay between downloads
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } catch (error) {
+                        console.error(`Failed to download ${filename}:`, error);
+                    }
+                }
+            });
 
         } catch (error) {
             console.error('API Error:', error);

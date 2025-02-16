@@ -6,7 +6,8 @@
   "permissions": [
     "webRequest",
     "storage",
-    "activeTab"
+    "activeTab",
+    "downloads"
   ],
   "host_permissions": [
     "*://*.suno.com/*",
