@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Add click handler for download button
             document.getElementById('downloadAllBtn').addEventListener('click', async () => {
                 const totalFiles = audioUrls.length;
-                
+
                 function downloadFile(item) {
                     return new Promise((resolve) => {
                         chrome.downloads.download({
@@ -159,13 +159,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 for (let i = 0; i < totalFiles; i++) {
                     const url = audioUrls[i];
                     const filename = url.split('/').pop();
-                    
+
                     try {
                         await downloadFile({
                             url: url,
                             filename: filename
                         });
-                        
+
                         // Add a small delay between downloads
                         await new Promise(resolve => setTimeout(resolve, 500));
                     } catch (error) {
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('testApiBtn').addEventListener('click', testApi);
 
     // Update every 2 seconds
-    setInterval(updateHeaderDisplay, 2000);
+    // setInterval(updateHeaderDisplay, 2000);
     document.getElementById('refreshBtn').addEventListener('click', updateHeaderDisplay);
     updateHeaderDisplay();
 });
